@@ -1,0 +1,14 @@
+Insert the files for RichFilemanager here:
+
+config
+connectors
+demo
+docs
+images
+languages
+libs
+src
+themes
+userfiles
+
+etc.
