@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\ResetsPasswords;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use App\User;
+use DB;
+
+class ResetPasswordController extends Controller
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Password Reset Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller is responsible for handling password reset requests
+    | and uses a simple trait to include this behavior. You're free to
+    | explore this trait and override any methods you wish to tweak.
+    |
+    */
+
+    use ResetsPasswords;
+
+    /**
+     * Where to redirect users after resetting their password.
+     *
+     * @var string
+     */
+    protected $redirectTo = '/home';
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('guest');
+    }
+
+    public function reset(Request $request)
+    {
+        $token_match = DB::table('password_resets')->where('email',$request->email)->first();
+        if(!count($token_match)){
+            return redirect('login')->with('error','Sorry! This token has been expired.');
+        }
+        if(!Hash::check($request->token,$token_match->token)){
+            return redirect('login')->with('error','Sorry! This token has been expired.');
+        }
+            
+            $this->validate($request, $this->rules(), $this->validationErrorMessages());
+            $users = User::select('id','email')->get();
+                foreach ($users as $user) {
+                    if ($request->email === $user->email) {
+                        // Here we will attempt to reset the user's password. If it is successful we
+                        // will update the password on an actual user model and persist it to the
+                        // database. Otherwise we will parse the error and return the response.
+                        $response = $this->resetPassword($user, $request->password);
+                        // If the password was successfully reset, we will redirect the user back to
+                        // the application's home authenticated view. If there is an error we can
+                        // redirect them back to where they came from with their error message.
+                        return $response == Password::PASSWORD_RESET
+                                    ? $this->sendResetResponse($response)
+                                    : $this->sendResetFailedResponse($request, $response);
+                    }
+                }
+                return redirect()->back()->with('error','Sorry! No user find with this email id');
+        
+                
+    }
+
+    protected function resetPassword($user, $password)
+    {
+        $user->password = Hash::make($password);
+
+        $user->setRememberToken(Str::random(60));
+
+        $user->save();
+
+        event(new PasswordReset($user));
+        DB::table('password_resets')->where('email',$user->email)->delete();
+        $this->guard()->login($user);
+    }
+
+}
