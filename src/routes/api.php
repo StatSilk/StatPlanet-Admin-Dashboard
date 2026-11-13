@@ -107,4 +107,4 @@ Route::match(['get', 'post'], '/filemanager', function (Request $request) {
     $app->api = new RFM\Api\LocalApi();
 
     $app->run();
-});
+})->middleware(['web', 'auth']);
