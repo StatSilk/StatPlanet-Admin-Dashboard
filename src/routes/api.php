@@ -22,19 +22,19 @@ Route::match(['get', 'post'], '/filemanager', function (Request $request) {
     function fm_authenticate()
     {
         // Customize this code as desired.
-        return true;
+        return auth()->check();
     }
 
     function fm_has_read_permission($filepath)
     {
         // Customize this code as desired.
-        return true;
+        return auth()->check();
     }
 
     function fm_has_write_permission($filepath)
     {
         // Customize this code as desired.
-        return true;
+        return auth()->check();
     }
 
 
